@@ -22,7 +22,7 @@ export function MinimalNavbar() {
           <div className="flex justify-between items-center h-16">
             {/* Brand */}
             <div className="flex-shrink-0">
-              <h1 className="text-xl font-bold text-foreground">EventPicker</h1>
+              <Link href="/" className="text-xl font-bold text-foreground">EventPicker</Link>
             </div>
 
             {/* Desktop Navigation */}

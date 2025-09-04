@@ -15,7 +15,6 @@ export interface Event {
   dressCode: string
   category: string
   imageUrl: string
-  organizer: string
 }
 
 // Dummy events data for preview
@@ -34,8 +33,7 @@ const dummyEvents: Event[] = [
     },
     dressCode: "Business Casual",
     category: "Technology",
-    imageUrl: "tech-conference.png",
-    organizer: "TechWorld Inc.",
+    imageUrl: "stock.jpg",
   },
   {
     id: "2",
@@ -51,8 +49,8 @@ const dummyEvents: Event[] = [
     },
     dressCode: "Casual",
     category: "Music",
-    imageUrl: "/vibrant-music-festival.png",
-    organizer: "LiveNation",
+    imageUrl: "stock.jpg",
+
   },
   {
     id: "3",
@@ -68,9 +66,8 @@ const dummyEvents: Event[] = [
     },
     dressCode: "Smart Casual",
     category: "Business",
+    imageUrl: "stock.jpg",
 
-    imageUrl: "/networking-event.png",
-    organizer: "Startup Connect",
   },
   {
     id: "4",
@@ -86,8 +83,8 @@ const dummyEvents: Event[] = [
     },
     dressCode: "Cocktail Attire",
     category: "Arts",
-    imageUrl: "/vibrant-art-gallery.png",
-    organizer: "ArtWorld",
+    imageUrl: "stock.jpg",
+
   },
   {
     id: "5",
@@ -103,8 +100,7 @@ const dummyEvents: Event[] = [
     },
     dressCode: "Elegant Casual",
     category: "Food & Drink",
-    imageUrl: "/wine-tasting.png",
-    organizer: "Gourmet Events",
+    imageUrl: "stock.jpg",
   },
 ]
 
