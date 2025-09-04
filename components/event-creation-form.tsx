@@ -42,6 +42,7 @@ export function EventCreationForm() {
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+  let formData: HTMLFormElement
 
   const handleLocationSelect = (location: { address: string; latitude: number; longitude: number }) => {
     setEventData((prev) => ({ ...prev, location }))
@@ -50,7 +51,8 @@ export function EventCreationForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
-
+    formData = e.currentTarget as HTMLFormElement
+    console.log("Form Data:", new FormData(formData))
     // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1000))
 
