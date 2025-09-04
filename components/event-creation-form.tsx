@@ -1,0 +1,225 @@
+"use client"
+
+import type React from "react"
+
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { LocationPlacePicker } from "@/components/location-place-picker"
+import { CalendarIcon, ClockIcon, MapPinIcon } from "lucide-react"
+
+interface EventData {
+  name: string
+  description: string
+  startDate: string
+  startTime: string
+  endDate: string
+  endTime: string
+  dressCode: string
+  image: string
+  location: {
+    address: string
+    latitude: number
+    longitude: number
+  } | null
+}
+
+export function EventCreationForm() {
+  const [eventData, setEventData] = useState<EventData>({
+    name: "",
+    description: "",
+    startDate: "",
+    startTime: "",
+    endDate: "",
+    endTime: "",
+    dressCode: "",
+    image: "",
+    location: null,
+  })
+
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleLocationSelect = (location: { address: string; latitude: number; longitude: number }) => {
+    setEventData((prev) => ({ ...prev, location }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+
+    console.log("Event Data:", eventData)
+    alert("Event created successfully!")
+
+    setIsSubmitting(false)
+  }
+
+  const isFormValid = eventData.name && eventData.startDate && eventData.startTime && eventData.location
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Event Details Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CalendarIcon className="h-5 w-5 text-primary" />
+            Event Details
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="eventName">Event Name *</Label>
+              <Input
+                id="eventName"
+                placeholder="Enter event name"
+                value={eventData.name}
+                onChange={(e) => setEventData((prev) => ({ ...prev, name: e.target.value }))}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dressCode">Dress Code</Label>
+              <Select
+                value={eventData.dressCode}
+                onValueChange={(value) => setEventData((prev) => ({ ...prev, dressCode: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select dress code" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="casual">Casual</SelectItem>
+                  <SelectItem value="business-casual">Business Casual</SelectItem>
+                  <SelectItem value="formal">Formal</SelectItem>
+                  <SelectItem value="black-tie">Black Tie</SelectItem>
+                  <SelectItem value="cocktail">Cocktail</SelectItem>
+                  <SelectItem value="themed">Themed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {/* Image upload */}
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="image">Event Image </Label>
+              <Input
+                id="image"
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) {
+                    const reader = new FileReader()
+                    reader.onloadend = () => {
+                      setEventData((prev) => ({ ...prev, image: reader.result as string }))
+                    }
+                    reader.readAsDataURL(file)
+                  }
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              placeholder="Describe your event..."
+              value={eventData.description}
+              onChange={(e) => setEventData((prev) => ({ ...prev, description: e.target.value }))}
+              rows={3}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Date and Time Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ClockIcon className="h-5 w-5 text-primary" />
+            Date & Time
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="startDate">Start Date *</Label>
+              <Input
+                id="startDate"
+                type="date"
+                value={eventData.startDate}
+                onChange={(e) => setEventData((prev) => ({ ...prev, startDate: e.target.value }))}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="startTime">Start Time *</Label>
+              <Input
+                id="startTime"
+                type="time"
+                value={eventData.startTime}
+                onChange={(e) => setEventData((prev) => ({ ...prev, startTime: e.target.value }))}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="endDate">End Date</Label>
+              <Input
+                id="endDate"
+                type="date"
+                value={eventData.endDate}
+                onChange={(e) => setEventData((prev) => ({ ...prev, endDate: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="endTime">End Time</Label>
+              <Input
+                id="endTime"
+                type="time"
+                value={eventData.endTime}
+                onChange={(e) => setEventData((prev) => ({ ...prev, endTime: e.target.value }))}
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Location Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MapPinIcon className="h-5 w-5 text-primary" />
+            Event Location
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <LocationPlacePicker onLocationSelect={handleLocationSelect} />
+          {eventData.location && (
+            <div className="mt-4 p-3 bg-muted rounded-lg">
+              <p className="text-sm font-medium">Selected Location:</p>
+              <p className="text-sm text-muted-foreground">{eventData.location.address}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Coordinates: {eventData.location.latitude.toFixed(6)}, {eventData.location.longitude.toFixed(6)}
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Submit Button */}
+      <div className="flex justify-end">
+        <Button type="submit" size="lg" disabled={!isFormValid || isSubmitting} className="min-w-[150px]">
+          {isSubmitting ? "Creating Event..." : "Create Event"}
+        </Button>
+      </div>
+    </form>
+  )
+}
