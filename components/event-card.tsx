@@ -31,11 +31,11 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
 
   return (
     <Card className="group hover:shadow-lg transition-all duration-300 border-border bg-card overflow-hidden">
-      {event.imageUrl && (
+      {event.image_url && (
         <div className="relative h-48 overflow-hidden">
           <Image
-            src={event.imageUrl || "/placeholder.svg"}
-            alt={event.title}
+            src={event.image_url || "/placeholder.svg"}
+            alt={event.eventname}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
@@ -50,7 +50,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
       <CardHeader className="pb-1">
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-semibold text-lg text-card-foreground line-clamp-2 group-hover:text-primary transition-colors">
-            {event.title}
+            {event.eventname}
           </h3>
         </div>
         <p className="text-muted-foreground text-sm line-clamp-2">{event.description}</p>
