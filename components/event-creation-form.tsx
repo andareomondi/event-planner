@@ -60,7 +60,6 @@ export function EventCreationForm() {
     const endTime = formData.get("EndTime") as string;
     // Getting the location
     const location = eventData.location;
-    console.log(location);
 
     if (!eventName || !startDate || !startTime || !location || !imageFile) {
       alert("Please fill in all required fields.")
