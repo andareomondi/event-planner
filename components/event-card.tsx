@@ -34,16 +34,11 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
       {event.image_url && (
         <div className="relative h-48 overflow-hidden">
           <Image
-            src={event.image_url || "/placeholder.svg"}
+            src={event.image_url}
             alt={event.eventname}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
-          <div className="absolute top-3 right-3">
-            <Badge variant="secondary" className="bg-background/90 text-foreground">
-              {event.category}
-            </Badge>
-          </div>
         </div>
       )}
 

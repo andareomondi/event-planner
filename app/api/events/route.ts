@@ -22,20 +22,14 @@ const EVENTS_API_URL = "http://127.0.0.1:8000/api/events/"
 // Function to fetch events from external API
 async function fetchEventsFromAPI(): Promise<Event[]> {
   try {
-    const response = await fetch(EVENTS_API_URL, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      cache: 'no-store', // Disable caching for fresh data
-    })
+    const response = await fetch(EVENTS_API_URL)
 
     if (!response.ok) {
       throw new Error(`Failed to fetch events: ${response.status} ${response.statusText}`)
     }
 
-    const data = await response.json()
-    console.log(data);
+    const rawdata = await response.json()
+    const data = rawdata.events_list // Adjust based on actual API response structure
     return data as Event[]
 
   } catch (error) {
