@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useCallback } from "react"
 import { EventCard } from "./event-card"
 import type { Event } from "@/app/api/events/route"
-import { Loader2 } from "lucide-react"
+import { Loader2, RefreshCw } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 interface EventsGridProps {
   filters?: {
@@ -18,41 +19,116 @@ interface EventsGridProps {
 
 export function EventsGrid({ filters, onEventSelect, onEventsUpdate }: EventsGridProps) {
   const [events, setEvents] = useState<Event[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false) // Changed to false - don't load initially
   const [error, setError] = useState<string | null>(null)
+  const [hasLoaded, setHasLoaded] = useState(false) // Track if data has been loaded at least once
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      console.log("[v0] Fetching events with filters:", filters)
-      setLoading(true)
-      setError(null)
+  const fetchEvents = useCallback(async () => {
+    console.log("[EventsGrid] Fetching events with filters:", filters)
+    setLoading(true)
+    setError(null)
 
-      try {
-        const searchParams = new URLSearchParams()
-        if (filters?.location) searchParams.set("location", filters.location)
-        if (filters?.category) searchParams.set("category", filters.category)
-        if (filters?.startDate) searchParams.set("startDate", filters.startDate)
-        if (filters?.endDate) searchParams.set("endDate", filters.endDate)
+    try {
+      const searchParams = new URLSearchParams()
 
-        const response = await fetch(`/api/events?${searchParams.toString()}`)
-        if (!response.ok) {
-          throw new Error("Failed to fetch events")
-        }
-
-        const data = await response.json()
-        console.log("[v0] Fetched events:", data.events.length)
-        setEvents(data.events)
-        onEventsUpdate?.(data.events)
-      } catch (err) {
-        console.log("[v0] Error fetching events:", err)
-        setError(err instanceof Error ? err.message : "An error occurred")
-      } finally {
-        setLoading(false)
+      // Only add non-empty filter values to avoid long URLs
+      if (filters?.location && filters.location.trim()) {
+        searchParams.set("location", filters.location.trim())
       }
-    }
+      if (filters?.category && filters.category.trim() && filters.category !== 'all') {
+        searchParams.set("category", filters.category.trim())
+      }
+      if (filters?.startDate && filters.startDate.trim()) {
+        searchParams.set("startDate", filters.startDate.trim())
+      }
+      if (filters?.endDate && filters.endDate.trim()) {
+        searchParams.set("endDate", filters.endDate.trim())
+      }
 
+      const queryString = searchParams.toString()
+      const url = queryString ? `/api/events?${queryString}` : '/api/events'
+
+      console.log("[EventsGrid] Fetching from URL:", url)
+      console.log("[EventsGrid] URL length:", url.length)
+
+      // Check if URL is too long (most servers have a 2048 character limit)
+      if (url.length > 2000) {
+        console.warn("[EventsGrid] URL might be too long:", url.length)
+      }
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        // Add timeout
+        signal: AbortSignal.timeout(15000) // 15 second timeout
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error("[EventsGrid] Response not ok:", response.status, response.statusText, errorText)
+        throw new Error(`Failed to fetch events: ${response.status} ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      console.log("[EventsGrid] Response data:", data)
+
+      // Validate the response structure
+      if (!data || typeof data !== 'object') {
+        throw new Error('Invalid response format')
+      }
+
+      const fetchedEvents = Array.isArray(data.events) ? data.events : []
+      console.log("[EventsGrid] Fetched events count:", fetchedEvents.length)
+
+      setEvents(fetchedEvents)
+      setHasLoaded(true)
+
+      // Call onEventsUpdate if provided
+      if (onEventsUpdate) {
+        onEventsUpdate(fetchedEvents)
+      }
+
+    } catch (err) {
+      console.error("[EventsGrid] Error fetching events:", err)
+      const errorMessage = err instanceof Error ? err.message : "An error occurred while fetching events"
+      setError(errorMessage)
+
+      // Set empty array on error
+      setEvents([])
+      if (onEventsUpdate) {
+        onEventsUpdate([])
+      }
+    } finally {
+      setLoading(false)
+    }
+  }, [filters, onEventsUpdate])
+
+  const handleRefresh = () => {
     fetchEvents()
-  }, [filters]) // Removed onEventsUpdate from dependencies to prevent infinite loop
+  }
+
+  // Show initial state when no data has been loaded yet
+  if (!hasLoaded && !loading) {
+    return (
+      <div className="text-center py-12 space-y-4">
+        <div className="space-y-2">
+          <h3 className="text-lg font-medium text-foreground">Ready to Load Events</h3>
+          <p className="text-muted-foreground">Click the button below to fetch events with your current filters</p>
+        </div>
+        <Button
+          onClick={handleRefresh}
+          size="lg"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground"
+        >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Load Events
+        </Button>
+      </div>
+    )
+  }
 
   if (loading) {
     return (
@@ -65,28 +141,72 @@ export function EventsGrid({ filters, onEventSelect, onEventsUpdate }: EventsGri
 
   if (error) {
     return (
-      <div className="text-center py-12">
-        <p className="text-destructive mb-2">Error loading events</p>
-        <p className="text-muted-foreground text-sm">{error}</p>
+      <div className="text-center py-12 space-y-4">
+        <div className="space-y-2">
+          <p className="text-destructive mb-2">Error loading events</p>
+          <p className="text-muted-foreground text-sm">{error}</p>
+        </div>
+        <Button
+          onClick={handleRefresh}
+          variant="outline"
+          size="lg"
+        >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Try Again
+        </Button>
       </div>
     )
   }
 
-  if (events.length === 0) {
+  if (events.length === 0 && hasLoaded) {
     return (
-      <div className="text-center py-12">
-        <p className="text-muted-foreground mb-2">No events found</p>
-        <p className="text-sm text-muted-foreground">Try adjusting your filters to see more events.</p>
+      <div className="text-center py-12 space-y-4">
+        <div className="space-y-2">
+          <p className="text-muted-foreground mb-2">No events found</p>
+          <p className="text-sm text-muted-foreground">
+            {Object.values(filters || {}).some(Boolean)
+              ? "Try adjusting your filters or refresh to see more events."
+              : "No events are currently available."
+            }
+          </p>
+        </div>
+        <Button
+          onClick={handleRefresh}
+          variant="outline"
+          size="lg"
+        >
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Refresh Events
+        </Button>
       </div>
     )
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {events.map((event) => (
-        <EventCard key={event.id} event={event} onViewDetails={onEventSelect} />
-      ))}
+    <div className="space-y-6">
+      {/* Refresh button at the top */}
+      <div className="flex justify-between items-center">
+        <p className="text-sm text-muted-foreground">
+          Showing {events.length} event{events.length !== 1 ? 's' : ''}
+          {Object.values(filters || {}).some(Boolean) && ' (filtered)'}
+        </p>
+        <Button
+          onClick={handleRefresh}
+          variant="outline"
+          size="sm"
+          disabled={loading}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
+      </div>
+
+      {/* Events Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {events.map((event) => (
+          <EventCard key={event.id} event={event} onViewDetails={onEventSelect} />
+        ))}
+      </div>
     </div>
   )
 }
-

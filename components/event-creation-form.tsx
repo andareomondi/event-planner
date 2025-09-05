@@ -66,6 +66,11 @@ export function EventCreationForm() {
       return
     }
     setIsSubmitting(true)
+
+    let imageBase64 = null;
+    if (imageFile && imageFile.size > 0) {
+      imageBase64 = await fileToBase64(imageFile);
+    }
     const eventPayload = {
       name: eventName,
       dressCode,
@@ -75,7 +80,7 @@ export function EventCreationForm() {
       endDate,
       endTime,
       location,
-      image: eventData.image,
+      image: imageBase64,
     }
     // Using a try catch block to handle potential errors
     try {
@@ -112,6 +117,16 @@ export function EventCreationForm() {
     }
     setIsSubmitting(false)
   }
+
+  // Helper function to convert file to base64
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
 
   const isFormValid = eventData.name && eventData.startDate && eventData.startTime && eventData.location
 
