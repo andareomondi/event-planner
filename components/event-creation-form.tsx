@@ -42,22 +42,73 @@ export function EventCreationForm() {
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
-  let formData: HTMLFormElement
-
   const handleLocationSelect = (location: { address: string; latitude: number; longitude: number }) => {
     setEventData((prev) => ({ ...prev, location }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setIsSubmitting(true)
-    formData = e.currentTarget as HTMLFormElement
-    console.log("Form Data:", new FormData(formData))
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
 
-    console.log("Event Data:", eventData)
-    alert("Event created successfully!")
+    const formData = new FormData(e.currentTarget);
+    const eventName = formData.get("eventName") as string;
+    const dressCode = formData.get("dressCode") as string;
+    const imageFile = formData.get("image") as File;
+    const description = formData.get("description") as string;
+    const startDate = formData.get("StartDate") as string;
+    const startTime = formData.get("StartTime") as string;
+    const endDate = formData.get("EndDate") as string;
+    const endTime = formData.get("EndTime") as string;
+    // Getting the location
+    const location = eventData.location;
+
+    if (!eventName || !startDate || !startTime || !location || !imageFile) {
+      alert("Please fill in all required fields.")
+      return
+    }
+    setIsSubmitting(true)
+    const eventPayload = {
+      name: eventName,
+      dressCode,
+      description,
+      startDate,
+      startTime,
+      endDate,
+      endTime,
+      location,
+      image: eventData.image,
+    }
+    try {
+      const response = await fetch("/api/events", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(eventPayload),
+      })
+
+      if (response.ok) {
+        alert("Event created successfully!")
+        // Reset form
+        setEventData({
+          name: "",
+          description: "",
+          startDate: "",
+          startTime: "",
+          endDate: "",
+          endTime: "",
+          dressCode: "",
+          image: "",
+          location: null,
+        })
+      } else {
+        const errorData = await response.json()
+        alert(`Error: ${errorData.message || "Failed to create event."}`)
+      }
+    }
+    catch (error) {
+      console.error("Error submitting form:", error)
+      alert("An unexpected error occurred. Please try again.")
+    }
 
     setIsSubmitting(false)
   }
@@ -84,12 +135,14 @@ export function EventCreationForm() {
                 value={eventData.name}
                 onChange={(e) => setEventData((prev) => ({ ...prev, name: e.target.value }))}
                 required
+                name="eventName"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="dressCode">Dress Code</Label>
               <Select
                 value={eventData.dressCode}
+                name="dressCode"
                 onValueChange={(value) => setEventData((prev) => ({ ...prev, dressCode: value }))}
               >
                 <SelectTrigger>
@@ -112,6 +165,9 @@ export function EventCreationForm() {
                 id="image"
                 type="file"
                 accept="image/*"
+                name="image"
+                placeholder="Upload event image"
+                className="file:bg-primary file:text-primary-foreground file:px-4  file:rounded-full "
                 onChange={(e) => {
                   const file = e.target.files?.[0]
                   if (file) {
@@ -133,6 +189,7 @@ export function EventCreationForm() {
               placeholder="Describe your event..."
               value={eventData.description}
               onChange={(e) => setEventData((prev) => ({ ...prev, description: e.target.value }))}
+              name="description"
               rows={3}
             />
           </div>
@@ -156,6 +213,7 @@ export function EventCreationForm() {
                 type="date"
                 value={eventData.startDate}
                 onChange={(e) => setEventData((prev) => ({ ...prev, startDate: e.target.value }))}
+                name="StartDate"
                 required
               />
             </div>
@@ -165,6 +223,7 @@ export function EventCreationForm() {
                 id="startTime"
                 type="time"
                 value={eventData.startTime}
+                name="StartTime"
                 onChange={(e) => setEventData((prev) => ({ ...prev, startTime: e.target.value }))}
                 required
               />
@@ -178,6 +237,7 @@ export function EventCreationForm() {
                 id="endDate"
                 type="date"
                 value={eventData.endDate}
+                name="EndDate"
                 onChange={(e) => setEventData((prev) => ({ ...prev, endDate: e.target.value }))}
               />
             </div>
@@ -186,6 +246,7 @@ export function EventCreationForm() {
               <Input
                 id="endTime"
                 type="time"
+                name="EndTime"
                 value={eventData.endTime}
                 onChange={(e) => setEventData((prev) => ({ ...prev, endTime: e.target.value }))}
               />
