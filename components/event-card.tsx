@@ -69,8 +69,7 @@ export function EventCard({ event, onViewDetails }: EventCardProps) {
         <div className="flex items-start gap-2 text-sm">
           <MapPin className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
           <div>
-            <div className="text-card-foreground font-medium">{event.location.name}</div>
-            <div className="text-muted-foreground text-xs">{event.location.address}</div>
+            <div className="text-card-foreground font-medium">{event.location.address}</div>
           </div>
         </div>
 

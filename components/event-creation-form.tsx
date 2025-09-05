@@ -60,6 +60,7 @@ export function EventCreationForm() {
     const endTime = formData.get("EndTime") as string;
     // Getting the location
     const location = eventData.location;
+    console.log(location);
 
     if (!eventName || !startDate || !startTime || !location || !imageFile) {
       alert("Please fill in all required fields.")
@@ -77,6 +78,7 @@ export function EventCreationForm() {
       location,
       image: eventData.image,
     }
+    // Using a try catch block to handle potential errors
     try {
       const response = await fetch("/api/events", {
         method: "POST",
@@ -109,7 +111,6 @@ export function EventCreationForm() {
       console.error("Error submitting form:", error)
       alert("An unexpected error occurred. Please try again.")
     }
-
     setIsSubmitting(false)
   }
 

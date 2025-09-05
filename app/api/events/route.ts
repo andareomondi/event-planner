@@ -7,7 +7,6 @@ export interface Event {
   startTime: string
   endTime: string
   location: {
-    name: string
     address: string
     latitude: number
     longitude: number
@@ -26,7 +25,6 @@ const dummyEvents: Event[] = [
     startTime: "2024-03-15T09:00:00Z",
     endTime: "2024-03-15T17:00:00Z",
     location: {
-      name: "Convention Center",
       address: "123 Tech Street, San Francisco, CA",
       latitude: 37.7749,
       longitude: -122.4194,
@@ -42,7 +40,6 @@ const dummyEvents: Event[] = [
     startTime: "2024-06-20T14:00:00Z",
     endTime: "2024-06-22T23:00:00Z",
     location: {
-      name: "Golden Gate Park",
       address: "Golden Gate Park, San Francisco, CA",
       latitude: 37.7694,
       longitude: -122.4862,
@@ -52,6 +49,7 @@ const dummyEvents: Event[] = [
     imageUrl: "stock.jpg",
 
   },
+
   {
     id: "3",
     title: "Startup Networking Mixer",
@@ -59,7 +57,6 @@ const dummyEvents: Event[] = [
     startTime: "2024-04-10T18:00:00Z",
     endTime: "2024-04-10T21:00:00Z",
     location: {
-      name: "Innovation Hub",
       address: "456 Startup Ave, Palo Alto, CA",
       latitude: 37.4419,
       longitude: -122.143,
@@ -76,7 +73,6 @@ const dummyEvents: Event[] = [
     startTime: "2024-05-05T19:00:00Z",
     endTime: "2024-05-05T22:00:00Z",
     location: {
-      name: "Modern Art Gallery",
       address: "789 Art District, Los Angeles, CA",
       latitude: 34.0522,
       longitude: -118.2437,
@@ -93,7 +89,6 @@ const dummyEvents: Event[] = [
     startTime: "2024-07-12T17:30:00Z",
     endTime: "2024-07-12T21:30:00Z",
     location: {
-      name: "Vineyard Estate",
       address: "321 Wine Country Rd, Napa, CA",
       latitude: 38.2975,
       longitude: -122.2869,
@@ -119,7 +114,6 @@ export async function GET(request: Request) {
   if (location) {
     filteredEvents = filteredEvents.filter(
       (event) =>
-        event.location.name.toLowerCase().includes(location.toLowerCase()) ||
         event.location.address.toLowerCase().includes(location.toLowerCase()),
     )
   }
