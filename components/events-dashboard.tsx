@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useCallback } from "react"
 import { EventsFilter } from "./events-filter"
 import { EventsGrid } from "./events-grid"
 import { EventsMap } from "./events-map"
@@ -28,27 +28,37 @@ export function EventsDashboard() {
   const [events, setEvents] = useState<Event[]>([])
   const [activeTab, setActiveTab] = useState("grid")
 
-  const handleFiltersChange = (newFilters: FilterState) => {
+  const handleFiltersChange = useCallback((newFilters: FilterState) => {
+    console.log("[EventsDashboard] Filters changed:", newFilters)
     setFilters(newFilters)
     // Clear selected event when filters change
     setSelectedEvent(null)
-  }
+  }, [])
 
-  const handleEventSelect = (event: Event) => {
+  const handleEventSelect = useCallback((event: Event) => {
+    console.log("[EventsDashboard] Event selected:", event.id)
     setSelectedEvent(event)
     // Switch to map view when an event is selected from grid
     if (activeTab === "grid") {
       setActiveTab("map")
     }
-  }
+  }, [activeTab])
 
   // Update events list when EventsGrid fetches new data
-  const handleEventsUpdate = (newEvents: Event[]) => {
+  const handleEventsUpdate = useCallback((newEvents: Event[]) => {
+    console.log("[EventsDashboard] Events updated:", newEvents.length)
     setEvents(newEvents)
+
     // Clear selected event if it's no longer in the filtered results
     if (selectedEvent && !newEvents.find((e) => e.id === selectedEvent.id)) {
+      console.log("[EventsDashboard] Clearing selected event as it's no longer in results")
       setSelectedEvent(null)
     }
+  }, [selectedEvent])
+
+  const handleTabChange = (value: string) => {
+    console.log("[EventsDashboard] Tab changed to:", value)
+    setActiveTab(value)
   }
 
   return (
@@ -76,7 +86,7 @@ export function EventsDashboard() {
 
         {/* Events Content */}
         <div className="lg:col-span-3">
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <div className="flex items-center justify-between mb-6">
               <TabsList className="grid w-fit grid-cols-2 bg-muted">
                 <TabsTrigger value="grid" className="flex items-center gap-2">
@@ -100,15 +110,53 @@ export function EventsDashboard() {
             </div>
 
             <TabsContent value="grid" className="mt-0">
-              <EventsGrid filters={filters} onEventSelect={handleEventSelect} onEventsUpdate={handleEventsUpdate} />
+              <EventsGrid
+                filters={filters}
+                onEventSelect={handleEventSelect}
+                onEventsUpdate={handleEventsUpdate}
+              />
             </TabsContent>
 
             <TabsContent value="map" className="mt-0">
-              <EventsMap events={events} selectedEvent={selectedEvent} onEventSelect={setSelectedEvent} />
+              {events.length > 0 ? (
+                <EventsMap
+                  events={events}
+                  selectedEvent={selectedEvent}
+                  onEventSelect={setSelectedEvent}
+                />
+              ) : (
+                <div className="text-center py-12 space-y-4">
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-medium text-foreground">No Events to Display</h3>
+                    <p className="text-muted-foreground">
+                      Switch to Grid View and load some events first, then come back to see them on the map.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => setActiveTab("grid")}
+                    variant="outline"
+                    size="lg"
+                  >
+                    <Grid3X3 className="h-4 w-4 mr-2" />
+                    Go to Grid View
+                  </Button>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </div>
       </div>
+
+      {/* Debug info - remove in production */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mt-8 p-4 bg-muted rounded-lg text-sm">
+          <h4 className="font-medium mb-2">Debug Info:</h4>
+          <p>Active Tab: {activeTab}</p>
+          <p>Events Count: {events.length}</p>
+          <p>Selected Event: {selectedEvent?.id || 'None'}</p>
+          <p>Filters: {JSON.stringify(filters)}</p>
+        </div>
+      )}
     </div>
   )
 }

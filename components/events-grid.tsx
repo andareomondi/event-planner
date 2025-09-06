@@ -110,7 +110,17 @@ export function EventsGrid({ filters, onEventSelect, onEventsUpdate }: EventsGri
     fetchEvents()
   }
 
-  // Show initial state when no data has been loaded yet
+  // Show initial loading state when component first mounts
+  if (isInitialLoad && loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Loading events...</span>
+      </div>
+    )
+  }
+
+  // This state should rarely be shown now since we auto-load on mount
   if (!hasLoaded && !loading) {
     return (
       <div className="text-center py-12 space-y-4">
