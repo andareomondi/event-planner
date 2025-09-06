@@ -109,7 +109,7 @@ export function EventsGrid({ filters, onEventSelect, onEventsUpdate }: EventsGri
   const handleRefresh = () => {
     fetchEvents()
   }
-
+  const isInitialLoad = !hasLoaded && !loading && events.length === 0
   // Show initial loading state when component first mounts
   if (isInitialLoad && loading) {
     return (
