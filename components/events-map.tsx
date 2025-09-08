@@ -91,7 +91,7 @@ export function EventsMap({ events, selectedEvent, onEventSelect, className }: E
       food: "bg-orange-500",
       default: "bg-gray-500",
     }
-    //  return colors[category.toLowerCase() as keyof typeof colors] || colors.default
+    return colors[category.toLowerCase() as keyof typeof colors] || colors.default
   }
 
   return (
