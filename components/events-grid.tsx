@@ -31,7 +31,6 @@ export function EventsGrid({ filters, onEventSelect, onEventsUpdate }: EventsGri
       if (useCache) {
         const cachedEvents = EventsCache.get(filters || {})
         if (cachedEvents) {
-          console.log("[EventsGrid] Using cached events:", cachedEvents.length)
           setEvents(cachedEvents)
           setHasLoaded(true)
           setLoading(false)
@@ -211,7 +210,7 @@ export function EventsGrid({ filters, onEventSelect, onEventsUpdate }: EventsGri
         <p className="text-sm text-muted-foreground">
           Showing {events.length} event{events.length !== 1 ? "s" : ""}
           {Object.values(filters || {}).some(Boolean) && " (filtered)"}
-          {!EventsCache.isExpired() && <span className="text-green-600 ml-2">(cached)</span>}
+          {!EventsCache.isExpired() && <span className="text-green-600 ml-2">Found</span>}
         </p>
         <Button onClick={handleRefresh} variant="outline" size="sm" disabled={loading}>
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
