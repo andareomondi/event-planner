@@ -228,7 +228,7 @@ export function LocationPlacePicker({ onLocationSelect }: LocationPlacePickerPro
               <MapPinIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="font-medium text-sm mb-2">No Location Selected</h3>
               <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                Search for a location above or click the locate button to use your current position. The selected
+                Click the locate button to use your current position. The selected
                 coordinates will be used for your event location.
               </p>
             </div>

@@ -20,6 +20,7 @@ interface EventData {
   endDate: string
   endTime: string
   dressCode: string
+  category: string
   image: string
   location: {
     address: string
@@ -37,6 +38,7 @@ export function EventCreationForm() {
     endDate: "",
     endTime: "",
     dressCode: "",
+    category: "",
     image: "",
     location: null,
   })
@@ -52,6 +54,7 @@ export function EventCreationForm() {
     const formData = new FormData(e.currentTarget);
     const eventName = formData.get("eventName") as string;
     const dressCode = formData.get("dressCode") as string;
+    const category = formData.get("category") as string;
     const imageFile = formData.get("image") as File;
     const description = formData.get("description") as string;
     const startDate = formData.get("StartDate") as string;
@@ -80,6 +83,7 @@ export function EventCreationForm() {
       endDate,
       endTime,
       location,
+      category,
       image: imageBase64,
     }
     // Using a try catch block to handle potential errors
@@ -103,6 +107,7 @@ export function EventCreationForm() {
           endDate: "",
           endTime: "",
           dressCode: "",
+          category: "",
           image: "",
           location: null,
         })
@@ -173,6 +178,28 @@ export function EventCreationForm() {
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="category">Event Category</Label>
+              <Select
+                value={eventData.category}
+                name="category"
+                onValueChange={(value) => setEventData((prev) => ({ ...prev, category: value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Event Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="technology">Technology</SelectItem>
+                  <SelectItem value="music">Music</SelectItem>
+                  <SelectItem value="business">Business</SelectItem>
+                  <SelectItem value="food & drinks">Food & Drinks</SelectItem>
+                  <SelectItem value="Sports">Sports</SelectItem>
+                  <SelectItem value="education">Education</SelectItem>
+                  <SelectItem value="health & wellness">Health & Wellness</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Image upload */}
             <div className="space-y-2 md:col-span-2">
               <Label htmlFor="image">Event Image </Label>
