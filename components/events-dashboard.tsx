@@ -146,17 +146,6 @@ export function EventsDashboard() {
           </Tabs>
         </div>
       </div>
-
-      {/* Debug info - remove in production */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="mt-8 p-4 bg-muted rounded-lg text-sm">
-          <h4 className="font-medium mb-2">Debug Info:</h4>
-          <p>Active Tab: {activeTab}</p>
-          <p>Events Count: {events.length}</p>
-          <p>Selected Event: {selectedEvent?.id || 'None'}</p>
-          <p>Filters: {JSON.stringify(filters)}</p>
-        </div>
-      )}
     </div>
   )
 }

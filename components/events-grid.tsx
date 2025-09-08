@@ -208,9 +208,7 @@ export function EventsGrid({ filters, onEventSelect, onEventsUpdate }: EventsGri
       {/* Refresh button at the top */}
       <div className="flex justify-between items-center">
         <p className="text-sm text-muted-foreground">
-          Showing {events.length} event{events.length !== 1 ? "s" : ""}
-          {Object.values(filters || {}).some(Boolean) && " (filtered)"}
-          {!EventsCache.isExpired() && <span className="text-green-600 ml-2">Found</span>}
+          List of events
         </p>
         <Button onClick={handleRefresh} variant="outline" size="sm" disabled={loading}>
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />

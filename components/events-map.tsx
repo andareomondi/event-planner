@@ -91,7 +91,7 @@ export function EventsMap({ events, selectedEvent, onEventSelect, className }: E
       food: "bg-orange-500",
       default: "bg-gray-500",
     }
-    return colors[category.toLowerCase() as keyof typeof colors] || colors.default
+    //  return colors[category.toLowerCase() as keyof typeof colors] || colors.default
   }
 
   return (
@@ -153,10 +153,10 @@ export function EventsMap({ events, selectedEvent, onEventSelect, className }: E
                   {/* Marker */}
                   <div
                     className={`w-7 h-7 rounded-full border-3 border-white shadow-lg flex items-center justify-center transition-all duration-200 ${isSelected
-                        ? `${getCategoryColor(event.category)} ring-2 ring-white ring-offset-2`
-                        : isHovered
-                          ? `${getCategoryColor(event.category)} shadow-xl`
-                          : `${getCategoryColor(event.category)} hover:shadow-xl`
+                      ? `${getCategoryColor(event.category)} ring-2 ring-white ring-offset-2`
+                      : isHovered
+                        ? `${getCategoryColor(event.category)} shadow-xl`
+                        : `${getCategoryColor(event.category)} hover:shadow-xl`
                       }`}
                   >
                     <MapPin className="h-4 w-4 text-white" />
@@ -165,8 +165,8 @@ export function EventsMap({ events, selectedEvent, onEventSelect, className }: E
                   {/* Tooltip */}
                   <div
                     className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 px-3 py-2 bg-popover border border-border rounded-lg shadow-xl text-xs whitespace-nowrap transition-all duration-200 max-w-xs ${isSelected || isHovered
-                        ? "opacity-100 translate-y-0"
-                        : "opacity-0 translate-y-1 pointer-events-none"
+                      ? "opacity-100 translate-y-0"
+                      : "opacity-0 translate-y-1 pointer-events-none"
                       }`}
                   >
                     <div className="font-semibold text-popover-foreground mb-1">{event.eventname}</div>
