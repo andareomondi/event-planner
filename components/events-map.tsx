@@ -86,10 +86,12 @@ export function EventsMap({ events, selectedEvent, onEventSelect, className }: E
     const colors = {
       technology: "bg-blue-500",
       music: "bg-purple-500",
-      networking: "bg-green-500",
-      art: "bg-pink-500",
+      business: "bg-green-500",
+      sports: "bg-pink-500",
       food: "bg-orange-500",
-      default: "bg-gray-500",
+      health: "bg-gray-500",
+      education: "bg-violet-500",
+      default: "bg-gold-500",
     }
     return colors[category.toLowerCase() as keyof typeof colors] || colors.default
   }
@@ -243,7 +245,7 @@ export function EventsMap({ events, selectedEvent, onEventSelect, className }: E
               </div>
               <div className="flex items-center gap-1">
                 <div className="w-3 h-3 bg-green-500 rounded-full border border-white shadow-sm" />
-                <span>Networking</span>
+                <span>Business</span>
               </div>
             </div>
             <div className="text-xs opacity-75">Click markers for details</div>
