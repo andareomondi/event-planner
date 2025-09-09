@@ -87,7 +87,7 @@ export function EventsGrid({ filters, onEventSelect, onEventsUpdate }: EventsGri
           console.error("[EventsGrid] Response not ok:", response.status, response.statusText, errorText)
           throw new Error(`Failed to fetch events: ${response.status} ${response.statusText}`)
         }
-
+//dont know what the hell i did
         const data = await response.json()
         console.log("[EventsGrid] Response data:", data)
 
