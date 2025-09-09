@@ -412,7 +412,7 @@ export function EventCreationForm() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <LocationPlacePicker onLocationSelect={handleLocationSelect} disabled={isSubmitting} />
+            <LocationPlacePicker onLocationSelect={handleLocationSelect} />
             {eventData.location && (
               <div className="mt-4 p-3 bg-muted rounded-lg">
                 <p className="text-sm font-medium">Selected Location:</p>
