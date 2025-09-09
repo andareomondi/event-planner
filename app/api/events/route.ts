@@ -16,7 +16,7 @@ export interface Event {
   image_url: string
 }
 
-const EVENTS_API_URL = "http://127.0.0.1:8000/api/events/"
+const EVENTS_API_URL = "https://another-backend.onrender.com/api/events/"
 const REQUEST_TIMEOUT = 10000 // 10 seconds
 
 async function fetchEventsFromAPI(): Promise<Event[]> {

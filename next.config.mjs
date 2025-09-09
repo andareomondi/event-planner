@@ -4,12 +4,12 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "http",
-        hostname: "127.0.0.1:8000",
+        hostname: "https://another-backend.onrender.com",
         pathname: "/media/**",
       },
       {
         protocol: "https",
-        hostname: "127.0.0.1:8000",
+        hostname: "https://another-backend.onrender.com0",
         pathname: "/media/**",
       },
     ],

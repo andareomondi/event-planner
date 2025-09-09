@@ -126,7 +126,7 @@ export function EventsGrid({ filters, onEventSelect, onEventsUpdate }: EventsGri
           </div>
           <p className="text-muted-foreground text-sm max-w-md mx-auto">{error}</p>
           <p className="text-xs text-muted-foreground mt-2">
-            Make sure the API at http://127.0.0.1:8000/api/events/ is running
+            Make sure the API at https://another-backend.onrender.com/api/events/ is running
           </p>
         </div>
         <Button onClick={handleRefresh} variant="outline" size="lg" disabled={loading}>
