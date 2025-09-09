@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { LocationPlacePicker } from "@/components/location-place-picker"
-import { CalendarIcon, ClockIcon, MapPinIcon } from "lucide-react"
+import { CalendarIcon, ClockIcon, MapPinIcon, CheckCircle, XCircle, Loader2 } from "lucide-react"
 
 interface EventData {
   name: string
@@ -29,6 +30,13 @@ interface EventData {
   } | null
 }
 
+interface ModalState {
+  isOpen: boolean
+  type: 'success' | 'error' | null
+  title: string
+  message: string
+}
+
 export function EventCreationForm() {
   const [eventData, setEventData] = useState<EventData>({
     name: "",
@@ -44,8 +52,54 @@ export function EventCreationForm() {
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [modal, setModal] = useState<ModalState>({
+    isOpen: false,
+    type: null,
+    title: '',
+    message: ''
+  })
+
   const handleLocationSelect = (location: { address: string; latitude: number; longitude: number }) => {
     setEventData((prev) => ({ ...prev, location }))
+  }
+
+  const showModal = (type: 'success' | 'error', title: string, message: string) => {
+    setModal({
+      isOpen: true,
+      type,
+      title,
+      message
+    })
+  }
+
+  const closeModal = () => {
+    setModal({
+      isOpen: false,
+      type: null,
+      title: '',
+      message: ''
+    })
+  }
+
+  const resetForm = () => {
+    setEventData({
+      name: "",
+      description: "",
+      startDate: "",
+      startTime: "",
+      endDate: "",
+      endTime: "",
+      dressCode: "",
+      category: "",
+      image: "",
+      location: null,
+    })
+    
+    // Reset file input
+    const imageInput = document.getElementById('image') as HTMLInputElement
+    if (imageInput) {
+      imageInput.value = ''
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -61,33 +115,61 @@ export function EventCreationForm() {
     const startTime = formData.get("StartTime") as string;
     const endDate = formData.get("EndDate") as string;
     const endTime = formData.get("EndTime") as string;
-    // Getting the location
     const location = eventData.location;
 
-    if (!eventName || !startDate || !startTime || !location || !imageFile) {
-      alert("Please fill in all required fields.")
+    // Validation
+    if (!eventName?.trim()) {
+      showModal('error', 'Missing Information', 'Please enter an event name.')
       return
     }
+    
+    if (!startDate) {
+      showModal('error', 'Missing Information', 'Please select a start date.')
+      return
+    }
+    
+    if (!startTime) {
+      showModal('error', 'Missing Information', 'Please select a start time.')
+      return
+    }
+    
+    if (!location) {
+      showModal('error', 'Missing Information', 'Please select an event location.')
+      return
+    }
+    
+    if (!imageFile || imageFile.size === 0) {
+      showModal('error', 'Missing Information', 'Please upload an event image.')
+      return
+    }
+
+    // Check file size (limit to 5MB)
+    if (imageFile.size > 5 * 1024 * 1024) {
+      showModal('error', 'File Too Large', 'Please upload an image smaller than 5MB.')
+      return
+    }
+
     setIsSubmitting(true)
 
-    let imageBase64 = null;
-    if (imageFile && imageFile.size > 0) {
-      imageBase64 = await fileToBase64(imageFile);
-    }
-    const eventPayload = {
-      name: eventName,
-      dressCode,
-      description,
-      startDate,
-      startTime,
-      endDate,
-      endTime,
-      location,
-      category,
-      image: imageBase64,
-    }
-    // Using a try catch block to handle potential errors
     try {
+      let imageBase64 = null;
+      if (imageFile && imageFile.size > 0) {
+        imageBase64 = await fileToBase64(imageFile);
+      }
+
+      const eventPayload = {
+        name: eventName.trim(),
+        dressCode,
+        description: description?.trim() || '',
+        startDate,
+        startTime,
+        endDate: endDate || startDate, // Default end date to start date if not provided
+        endTime: endTime || startTime, // Default end time to start time if not provided
+        location,
+        category,
+        image: imageBase64,
+      }
+
       const response = await fetch("http://127.0.0.1:8000/api/events/create/", {
         method: "POST",
         headers: {
@@ -97,30 +179,43 @@ export function EventCreationForm() {
       })
 
       if (response.ok) {
-        alert("Event created successfully!")
-        // Reset form
-        setEventData({
-          name: "",
-          description: "",
-          startDate: "",
-          startTime: "",
-          endDate: "",
-          endTime: "",
-          dressCode: "",
-          category: "",
-          image: "",
-          location: null,
-        })
+        const responseData = await response.json()
+        showModal(
+          'success', 
+          'Event Created Successfully!', 
+          `Your event "${eventName}" has been created and is now available for attendees to discover.`
+        )
+        resetForm()
       } else {
-        const errorData = await response.json()
-        alert(`Error: ${errorData.message || "Failed to create event."}`)
+        let errorMessage = 'Failed to create event. Please try again.'
+        
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.message || errorData.detail || errorMessage
+        } catch {
+          // If response isn't JSON, use status text
+          errorMessage = response.statusText || errorMessage
+        }
+
+        showModal(
+          'error', 
+          `Error ${response.status}`,
+          errorMessage
+        )
       }
-    }
-    catch (error) {
+    } catch (error) {
       console.error("Error submitting form:", error)
-      alert("An unexpected error occurred. Please try again.")
+      
+      let errorMessage = 'An unexpected error occurred. Please check your connection and try again.'
+      
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        errorMessage = 'Unable to connect to the server. Please make sure the API is running and try again.'
+      }
+      
+      showModal('error', 'Connection Error', errorMessage)
+    } finally {
+      setIsSubmitting(false)
     }
-    setIsSubmitting(false)
   }
 
   // Helper function to convert file to base64
@@ -136,195 +231,248 @@ export function EventCreationForm() {
   const isFormValid = eventData.name && eventData.startDate && eventData.startTime && eventData.location
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Event Details Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CalendarIcon className="h-5 w-5 text-primary" />
-            Event Details
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="eventName">Event Name *</Label>
-              <Input
-                id="eventName"
-                placeholder="Enter event name"
-                value={eventData.name}
-                onChange={(e) => setEventData((prev) => ({ ...prev, name: e.target.value }))}
-                required
-                name="eventName"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="dressCode">Dress Code</Label>
-              <Select
-                value={eventData.dressCode}
-                name="dressCode"
-                onValueChange={(value) => setEventData((prev) => ({ ...prev, dressCode: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select dress code" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="casual">Casual</SelectItem>
-                  <SelectItem value="business-casual">Business Casual</SelectItem>
-                  <SelectItem value="formal">Formal</SelectItem>
-                  <SelectItem value="black-tie">Black Tie</SelectItem>
-                  <SelectItem value="cocktail">Cocktail</SelectItem>
-                  <SelectItem value="themed">Themed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="category">Event Category</Label>
-              <Select
-                value={eventData.category}
-                name="category"
-                onValueChange={(value) => setEventData((prev) => ({ ...prev, category: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Event Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="technology">Technology</SelectItem>
-                  <SelectItem value="music">Music</SelectItem>
-                  <SelectItem value="business">Business</SelectItem>
-                  <SelectItem value="food & drinks">Food & Drinks</SelectItem>
-                  <SelectItem value="Sports">Sports</SelectItem>
-                  <SelectItem value="education">Education</SelectItem>
-                  <SelectItem value="health & wellness">Health & Wellness</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+    <>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Event Details Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <CalendarIcon className="h-5 w-5 text-primary" />
+              Event Details
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="eventName">Event Name *</Label>
+                <Input
+                  id="eventName"
+                  placeholder="Enter event name"
+                  value={eventData.name}
+                  onChange={(e) => setEventData((prev) => ({ ...prev, name: e.target.value }))}
+                  required
+                  name="eventName"
+                  disabled={isSubmitting}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dressCode">Dress Code</Label>
+                <Select
+                  value={eventData.dressCode}
+                  name="dressCode"
+                  onValueChange={(value) => setEventData((prev) => ({ ...prev, dressCode: value }))}
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select dress code" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="casual">Casual</SelectItem>
+                    <SelectItem value="business-casual">Business Casual</SelectItem>
+                    <SelectItem value="formal">Formal</SelectItem>
+                    <SelectItem value="black-tie">Black Tie</SelectItem>
+                    <SelectItem value="cocktail">Cocktail</SelectItem>
+                    <SelectItem value="themed">Themed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="category">Event Category</Label>
+                <Select
+                  value={eventData.category}
+                  name="category"
+                  onValueChange={(value) => setEventData((prev) => ({ ...prev, category: value }))}
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Event Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="technology">Technology</SelectItem>
+                    <SelectItem value="music">Music</SelectItem>
+                    <SelectItem value="business">Business</SelectItem>
+                    <SelectItem value="food & drinks">Food & Drinks</SelectItem>
+                    <SelectItem value="Sports">Sports</SelectItem>
+                    <SelectItem value="education">Education</SelectItem>
+                    <SelectItem value="health & wellness">Health & Wellness</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Image upload */}
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="image">Event Image </Label>
-              <Input
-                id="image"
-                type="file"
-                accept="image/*"
-                name="image"
-                placeholder="Upload event image"
-                className="file:bg-primary file:text-primary-foreground file:px-4  file:rounded-full "
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) {
-                    const reader = new FileReader()
-                    reader.onloadend = () => {
-                      setEventData((prev) => ({ ...prev, image: reader.result as string }))
+              {/* Image upload */}
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="image">Event Image *</Label>
+                <Input
+                  id="image"
+                  type="file"
+                  accept="image/*"
+                  name="image"
+                  placeholder="Upload event image"
+                  className="file:bg-primary file:text-primary-foreground file:px-4 file:rounded-full"
+                  disabled={isSubmitting}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0]
+                    if (file) {
+                      const reader = new FileReader()
+                      reader.onloadend = () => {
+                        setEventData((prev) => ({ ...prev, image: reader.result as string }))
+                      }
+                      reader.readAsDataURL(file)
                     }
-                    reader.readAsDataURL(file)
-                  }
-                }}
-              />
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">Maximum file size: 5MB</p>
+              </div>
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              placeholder="Describe your event..."
-              value={eventData.description}
-              onChange={(e) => setEventData((prev) => ({ ...prev, description: e.target.value }))}
-              name="description"
-              rows={3}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Date and Time Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ClockIcon className="h-5 w-5 text-primary" />
-            Date & Time
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="startDate">Start Date *</Label>
-              <Input
-                id="startDate"
-                type="date"
-                value={eventData.startDate}
-                onChange={(e) => setEventData((prev) => ({ ...prev, startDate: e.target.value }))}
-                name="StartDate"
-                required
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                placeholder="Describe your event..."
+                value={eventData.description}
+                onChange={(e) => setEventData((prev) => ({ ...prev, description: e.target.value }))}
+                name="description"
+                rows={3}
+                disabled={isSubmitting}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="startTime">Start Time *</Label>
-              <Input
-                id="startTime"
-                type="time"
-                value={eventData.startTime}
-                name="StartTime"
-                onChange={(e) => setEventData((prev) => ({ ...prev, startTime: e.target.value }))}
-                required
-              />
-            </div>
-          </div>
+          </CardContent>
+        </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="endDate">End Date</Label>
-              <Input
-                id="endDate"
-                type="date"
-                value={eventData.endDate}
-                name="EndDate"
-                onChange={(e) => setEventData((prev) => ({ ...prev, endDate: e.target.value }))}
-              />
+        {/* Date and Time Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ClockIcon className="h-5 w-5 text-primary" />
+              Date & Time
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="startDate">Start Date *</Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={eventData.startDate}
+                  onChange={(e) => setEventData((prev) => ({ ...prev, startDate: e.target.value }))}
+                  name="StartDate"
+                  required
+                  disabled={isSubmitting}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="startTime">Start Time *</Label>
+                <Input
+                  id="startTime"
+                  type="time"
+                  value={eventData.startTime}
+                  name="StartTime"
+                  onChange={(e) => setEventData((prev) => ({ ...prev, startTime: e.target.value }))}
+                  required
+                  disabled={isSubmitting}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="endTime">End Time</Label>
-              <Input
-                id="endTime"
-                type="time"
-                name="EndTime"
-                value={eventData.endTime}
-                onChange={(e) => setEventData((prev) => ({ ...prev, endTime: e.target.value }))}
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
-      {/* Location Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPinIcon className="h-5 w-5 text-primary" />
-            Event Location
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <LocationPlacePicker onLocationSelect={handleLocationSelect} />
-          {eventData.location && (
-            <div className="mt-4 p-3 bg-muted rounded-lg">
-              <p className="text-sm font-medium">Selected Location:</p>
-              <p className="text-sm text-muted-foreground">{eventData.location.address}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Coordinates: {eventData.location.latitude.toFixed(6)}, {eventData.location.longitude.toFixed(6)}
-              </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="endDate">End Date</Label>
+                <Input
+                  id="endDate"
+                  type="date"
+                  value={eventData.endDate}
+                  name="EndDate"
+                  onChange={(e) => setEventData((prev) => ({ ...prev, endDate: e.target.value }))}
+                  disabled={isSubmitting}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="endTime">End Time</Label>
+                <Input
+                  id="endTime"
+                  type="time"
+                  name="EndTime"
+                  value={eventData.endTime}
+                  onChange={(e) => setEventData((prev) => ({ ...prev, endTime: e.target.value }))}
+                  disabled={isSubmitting}
+                />
+              </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Submit Button */}
-      <div className="flex justify-end">
-        <Button type="submit" size="lg" disabled={!isFormValid || isSubmitting} className="min-w-[150px]">
-          {isSubmitting ? "Creating Event..." : "Create Event"}
-        </Button>
-      </div>
-    </form>
+        {/* Location Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MapPinIcon className="h-5 w-5 text-primary" />
+              Event Location
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <LocationPlacePicker onLocationSelect={handleLocationSelect} disabled={isSubmitting} />
+            {eventData.location && (
+              <div className="mt-4 p-3 bg-muted rounded-lg">
+                <p className="text-sm font-medium">Selected Location:</p>
+                <p className="text-sm text-muted-foreground">{eventData.location.address}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Coordinates: {eventData.location.latitude.toFixed(6)}, {eventData.location.longitude.toFixed(6)}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Submit Button */}
+        <div className="flex justify-end">
+          <Button 
+            type="submit" 
+            size="lg" 
+            disabled={!isFormValid || isSubmitting} 
+            className="min-w-[150px]"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Creating Event...
+              </>
+            ) : (
+              'Create Event'
+            )}
+          </Button>
+        </div>
+      </form>
+
+      {/* Success/Error Modal */}
+      <Dialog open={modal.isOpen} onOpenChange={closeModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader className="text-center">
+            <div className="mx-auto mb-4">
+              {modal.type === 'success' ? (
+                <CheckCircle className="h-16 w-16 text-green-500" />
+              ) : (
+                <XCircle className="h-16 w-16 text-destructive" />
+              )}
+            </div>
+            <DialogTitle className="text-xl">
+              {modal.title}
+            </DialogTitle>
+            <DialogDescription className="text-center text-base mt-2">
+              {modal.message}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="sm:justify-center">
+            <Button 
+              onClick={closeModal} 
+              className={modal.type === 'success' ? 'bg-green-600 hover:bg-green-700' : ''}
+            >
+              {modal.type === 'success' ? 'Great!' : 'Try Again'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

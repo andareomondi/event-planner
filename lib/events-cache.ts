@@ -2,19 +2,25 @@ interface CachedEvents {
   events: any[]
   timestamp: number
   filters: Record<string, string>
+  success: boolean
 }
 
 const CACHE_KEY = "events_cache"
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
 export class EventsCache {
-  static set(events: any[], filters: Record<string, string> = {}) {
+  static set(events: any[], filters: Record<string, string> = {}, success = true) {
     if (typeof window === "undefined") return
+
+    if (!success || !Array.isArray(events)) {
+      return
+    }
 
     const cacheData: CachedEvents = {
       events,
       timestamp: Date.now(),
       filters,
+      success,
     }
 
     try {
@@ -32,15 +38,11 @@ export class EventsCache {
       if (!cached) return null
 
       const cacheData: CachedEvents = JSON.parse(cached)
-      const now = Date.now()
 
-      // Check if cache is expired
-      if (now - cacheData.timestamp > CACHE_DURATION) {
-        localStorage.removeItem(CACHE_KEY)
+      if (!cacheData.success) {
         return null
       }
 
-      // Check if filters match (for simple cases)
       const filtersMatch = Object.keys(filters).every((key) => filters[key] === cacheData.filters[key])
 
       if (filtersMatch) {

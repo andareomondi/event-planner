@@ -129,7 +129,7 @@ export function EventsDashboard() {
                   <div className="space-y-2">
                     <h3 className="text-lg font-medium text-foreground">No Events to Display</h3>
                     <p className="text-muted-foreground">
-                      Switch to Grid View and load some events first, then come back to see them on the map.
+                      The map will show events once they're loaded from the Grid View.
                     </p>
                   </div>
                   <Button
